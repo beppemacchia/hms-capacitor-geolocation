@@ -3,12 +3,12 @@ package com.capacitorjs.plugins.geolocation;
 import android.content.Context;
 import android.location.Location;
 import android.location.LocationManager;
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationAvailability;
-import com.google.android.gms.location.LocationCallback;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationResult;
-import com.google.android.gms.location.LocationServices;
+import com.huawei.hms.location.FusedLocationProviderClient;
+import com.huawei.hms.location.LocationAvailability;
+import com.huawei.hms.location.LocationCallback;
+import com.huawei.hms.location.LocationRequest;
+import com.huawei.hms.location.LocationResult;
+import com.huawei.hms.location.LocationServices;
 
 public class Geolocation {
 

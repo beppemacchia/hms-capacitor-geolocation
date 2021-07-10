@@ -1,7 +1,7 @@
 {
   "name": "@capacitor/geolocation",
   "version": "1.0.2",
-  "description": "The Geolocation API provides simple methods for getting and tracking the current position of the device using GPS, along with altitude, heading, and speed information if available.",
+  "description": "The Geolocation API (for HMS devices) provides simple methods for getting and tracking the current position of the device using GPS, along with altitude, heading, and speed information if available.",
   "main": "dist/plugin.cjs.js",
   "module": "dist/esm/index.js",
   "types": "dist/esm/index.d.ts",
@@ -13,14 +13,14 @@
     "ios/Plugin/",
     "CapacitorGeolocation.podspec"
   ],
-  "author": "Ionic <hi@ionicframework.com>",
+  "author": "Giuseppe Macchia",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ionic-team/capacitor-plugins"
+    "url": "git+https://github.com/beppemacchia/hms-capacitor-geolocation.git"
   },
   "bugs": {
-    "url": "https://github.com/ionic-team/capacitor-plugins/issues"
+    "url": "https://github.com/beppemacchia/hms-capacitor-geolocation/issues"
   },
   "keywords": [
     "capacitor",
