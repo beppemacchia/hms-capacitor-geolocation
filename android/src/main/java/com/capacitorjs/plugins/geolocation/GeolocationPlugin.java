@@ -17,17 +17,58 @@ import java.util.Map;
 @CapacitorPlugin(
     name = "Geolocation",
     permissions = {
-        @Permission(strings = { Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION }, alias = "location")
+        @Permission(
+            strings = { Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION },
+            alias = GeolocationPlugin.LOCATION
+        ),
+        @Permission(strings = { Manifest.permission.ACCESS_COARSE_LOCATION }, alias = GeolocationPlugin.COARSE_LOCATION)
     }
 )
 public class GeolocationPlugin extends Plugin {
 
+    static final String LOCATION = "location";
+    static final String COARSE_LOCATION = "coarseLocation";
     private Geolocation implementation;
     private Map<String, PluginCall> watchingCalls = new HashMap<>();
 
     @Override
     public void load() {
         implementation = new Geolocation(getContext());
+    }
+
+    @Override
+    protected void handleOnPause() {
+        super.handleOnPause();
+        // Clear all location updates on pause to avoid possible background location calls
+        implementation.clearLocationUpdates();
+    }
+
+    @Override
+    protected void handleOnResume() {
+        super.handleOnResume();
+        for (PluginCall call : watchingCalls.values()) {
+            startWatch(call);
+        }
+    }
+
+    @Override
+    @PluginMethod
+    public void checkPermissions(PluginCall call) {
+        if (implementation.isLocationServicesEnabled()) {
+            super.checkPermissions(call);
+        } else {
+            call.reject("Location services are not enabled");
+        }
+    }
+
+    @Override
+    @PluginMethod
+    public void requestPermissions(PluginCall call) {
+        if (implementation.isLocationServicesEnabled()) {
+            super.requestPermissions(call);
+        } else {
+            call.reject("Location services are not enabled");
+        }
     }
 
     /**
@@ -38,8 +79,9 @@ public class GeolocationPlugin extends Plugin {
      */
     @PluginMethod
     public void getCurrentPosition(final PluginCall call) {
-        if (getPermissionState("location") != PermissionState.GRANTED) {
-            requestAllPermissions(call, "completeCurrentPosition");
+        String alias = getAlias(call);
+        if (getPermissionState(alias) != PermissionState.GRANTED) {
+            requestPermissionForAlias(alias, call, "completeCurrentPosition");
         } else {
             getPosition(call);
         }
@@ -52,14 +94,9 @@ public class GeolocationPlugin extends Plugin {
      */
     @PermissionCallback
     private void completeCurrentPosition(PluginCall call) {
-        if (getPermissionState("location") == PermissionState.GRANTED) {
-            boolean enableHighAccuracy = call.getBoolean("enableHighAccuracy", false);
-            int timeout = call.getInt("timeout", 10000);
-
+        if (getPermissionState(GeolocationPlugin.COARSE_LOCATION) == PermissionState.GRANTED) {
             implementation.sendLocation(
-                enableHighAccuracy,
-                timeout,
-                true,
+                isHighAccuracy(call),
                 new LocationResultCallback() {
                     @Override
                     public void success(Location location) {
@@ -86,8 +123,9 @@ public class GeolocationPlugin extends Plugin {
     @PluginMethod(returnType = PluginMethod.RETURN_CALLBACK)
     public void watchPosition(PluginCall call) {
         call.setKeepAlive(true);
-        if (getPermissionState("location") != PermissionState.GRANTED) {
-            requestAllPermissions(call, "completeWatchPosition");
+        String alias = getAlias(call);
+        if (getPermissionState(alias) != PermissionState.GRANTED) {
+            requestPermissionForAlias(alias, call, "completeWatchPosition");
         } else {
             startWatch(call);
         }
@@ -100,7 +138,7 @@ public class GeolocationPlugin extends Plugin {
      */
     @PermissionCallback
     private void completeWatchPosition(PluginCall call) {
-        if (getPermissionState("location") == PermissionState.GRANTED) {
+        if (getPermissionState(GeolocationPlugin.COARSE_LOCATION) == PermissionState.GRANTED) {
             startWatch(call);
         } else {
             call.reject("Location permission was denied");
@@ -109,36 +147,35 @@ public class GeolocationPlugin extends Plugin {
 
     @SuppressWarnings("MissingPermission")
     private void getPosition(PluginCall call) {
-        boolean enableHighAccuracy = call.getBoolean("enableHighAccuracy", false);
-        int timeout = call.getInt("timeout", 10000);
+        int maximumAge = call.getInt("maximumAge", 0);
+        Location location = implementation.getLastLocation(maximumAge);
+        if (location != null) {
+            call.resolve(getJSObjectForLocation(location));
+        } else {
+            implementation.sendLocation(
+                isHighAccuracy(call),
+                new LocationResultCallback() {
+                    @Override
+                    public void success(Location location) {
+                        call.resolve(getJSObjectForLocation(location));
+                    }
 
-        implementation.sendLocation(
-            enableHighAccuracy,
-            timeout,
-            true,
-            new LocationResultCallback() {
-                @Override
-                public void success(Location location) {
-                    call.resolve(getJSObjectForLocation(location));
+                    @Override
+                    public void error(String message) {
+                        call.reject(message);
+                    }
                 }
-
-                @Override
-                public void error(String message) {
-                    call.reject(message);
-                }
-            }
-        );
+            );
+        }
     }
 
     @SuppressWarnings("MissingPermission")
     private void startWatch(final PluginCall call) {
-        boolean enableHighAccuracy = call.getBoolean("enableHighAccuracy", false);
         int timeout = call.getInt("timeout", 10000);
 
         implementation.requestLocationUpdates(
-            enableHighAccuracy,
+            isHighAccuracy(call),
             timeout,
-            false,
             new LocationResultCallback() {
                 @Override
                 public void success(Location location) {
@@ -190,11 +227,27 @@ public class GeolocationPlugin extends Plugin {
         coords.put("longitude", location.getLongitude());
         coords.put("accuracy", location.getAccuracy());
         coords.put("altitude", location.getAltitude());
-        if (Build.VERSION.SDK_INT >= 26) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             coords.put("altitudeAccuracy", location.getVerticalAccuracyMeters());
         }
         coords.put("speed", location.getSpeed());
         coords.put("heading", location.getBearing());
         return ret;
+    }
+
+    private String getAlias(PluginCall call) {
+        String alias = GeolocationPlugin.LOCATION;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            boolean enableHighAccuracy = call.getBoolean("enableHighAccuracy", false);
+            if (!enableHighAccuracy) {
+                alias = GeolocationPlugin.COARSE_LOCATION;
+            }
+        }
+        return alias;
+    }
+
+    private boolean isHighAccuracy(PluginCall call) {
+        boolean enableHighAccuracy = call.getBoolean("enableHighAccuracy", false);
+        return enableHighAccuracy && getPermissionState(GeolocationPlugin.LOCATION) == PermissionState.GRANTED;
     }
 }
