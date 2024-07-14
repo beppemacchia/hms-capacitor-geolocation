@@ -1,13 +1,9 @@
 # @capacitor/geolocation
 
-The Geolocation API provides simple methods for getting and tracking the current position of the device using GPS, along with altitude, heading, and speed information if available.
+The Geolocation API (for HMS Devices) provides simple methods for getting and tracking the current position of the device using GPS, along with altitude, heading, and speed information if available.
 
 ## Install
-
-```bash
-npm install @capacitor/geolocation
-npx cap sync
-```
+Build and install yourself
 
 ## iOS
 
