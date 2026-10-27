@@ -51,10 +51,7 @@ export interface GeolocationPlugin {
    *
    * @since 1.0.0
    */
-  watchPosition(
-    options: PositionOptions,
-    callback: WatchPositionCallback,
-  ): Promise<CallbackID>;
+  watchPosition(options: PositionOptions, callback: WatchPositionCallback): Promise<CallbackID>;
 
   /**
    * Clear a given watch
@@ -75,9 +72,7 @@ export interface GeolocationPlugin {
    *
    * @since 1.0.0
    */
-  requestPermissions(
-    permissions?: GeolocationPluginPermissions,
-  ): Promise<PermissionStatus>;
+  requestPermissions(permissions?: GeolocationPluginPermissions): Promise<PermissionStatus>;
 }
 
 export interface ClearWatchOptions {
@@ -182,10 +177,7 @@ export interface PositionOptions {
   maximumAge?: number;
 }
 
-export type WatchPositionCallback = (
-  position: Position | null,
-  err?: any,
-) => void;
+export type WatchPositionCallback = (position: Position | null, err?: any) => void;
 
 /**
  * @deprecated Use `PositionOptions`.

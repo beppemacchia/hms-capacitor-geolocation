@@ -13,7 +13,6 @@ import com.huawei.hms.location.LocationRequest;
 import com.huawei.hms.location.LocationResult;
 import com.huawei.hms.location.LocationServices;
 
-
 public class Geolocation {
 
     private FusedLocationProviderClient fusedLocationClient;
@@ -43,20 +42,16 @@ public class Geolocation {
                     networkEnabled = lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
                 } catch (Exception ex) {}
 
-
-                LocationServices
-                    .getFusedLocationProviderClient(context)
-                        .getLastLocation()
-                    .addOnFailureListener(e -> resultCallback.error(e.getMessage()))
-                    .addOnSuccessListener(
-                        location -> {
-                            if (location == null) {
-                                resultCallback.error("location unavailable");
-                            } else {
-                                resultCallback.success(location);
-                            }
+                LocationServices.getFusedLocationProviderClient(context)
+                    .getLastLocation()
+                    .addOnFailureListener((e) -> resultCallback.error(e.getMessage()))
+                    .addOnSuccessListener((location) -> {
+                        if (location == null) {
+                            resultCallback.error("location unavailable");
+                        } else {
+                            resultCallback.success(location);
                         }
-                    );
+                    });
             } else {
                 resultCallback.error("location disabled");
             }
@@ -83,25 +78,23 @@ public class Geolocation {
                 int lowPriority = networkEnabled ? LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY : LocationRequest.PRIORITY_LOW_POWER;
                 int priority = enableHighAccuracy ? LocationRequest.PRIORITY_HIGH_ACCURACY : lowPriority;
 
-                LocationRequest locationRequest = LocationRequest
-                    .create()
+                LocationRequest locationRequest = LocationRequest.create()
                     .setMaxWaitTime(timeout)
                     .setInterval(10000)
                     .setFastestInterval(5000)
                     .setPriority(priority);
 
-                locationCallback =
-                    new LocationCallback() {
-                        @Override
-                        public void onLocationResult(LocationResult locationResult) {
-                            Location lastLocation = locationResult.getLastLocation();
-                            if (lastLocation == null) {
-                                resultCallback.error("location unavailable");
-                            } else {
-                                resultCallback.success(lastLocation);
-                            }
+                locationCallback = new LocationCallback() {
+                    @Override
+                    public void onLocationResult(LocationResult locationResult) {
+                        Location lastLocation = locationResult.getLastLocation();
+                        if (lastLocation == null) {
+                            resultCallback.error("location unavailable");
+                        } else {
+                            resultCallback.success(lastLocation);
                         }
-                    };
+                    }
+                };
 
                 fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, null);
             } else {

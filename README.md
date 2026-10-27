@@ -33,7 +33,7 @@ Read about [Setting Permissions](https://capacitorjs.com/docs/android/configurat
 
 This plugin will use the following project variables (defined in your app's `variables.gradle` file):
 
-- `$hmsLocationVersion` version of `com.huawei.hms:location` (default: `5.1.0.303`)
+- `$hmsLocationVersion` version of `com.huawei.hms:location` (default: `6.12.0.300`)
 
 ## Example
 
